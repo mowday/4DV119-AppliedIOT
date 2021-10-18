@@ -13,6 +13,7 @@ If I have time I will also add a sound level tracker.
     - [The physical network layer](#the-physical-network-layer)
     - [Visualisation and user interface](#visualisation-and-user-interface)
     - [Finalizing the design](#finalizing-the-design)
+    - [Links and resources](#links-and-resources)
 
 ### Objectives
 
@@ -24,8 +25,18 @@ Since this all about learning quickly I gave chosen tools that gets me to the en
 
 | Unit | Description | Price|
 |------|-------------|------|
-| [LoPy4 Bundle](https://www.electrokit.com/produkt/lnu-1dt305-tillampad-iot-lopy4-and-sensors-bundle/) | A bundle created to the previous course by Electrokit | 949 SEK |
+| [LoPy4 Bundle](https://www.electrokit.com/produkt/lnu-1dt305-tillampad-iot-lopy4-and-sensors-bundle/) | A bundle created to the previous course by Electrokit, includes the LoPy4 | 949 SEK |
+| [SCD-30](https://www.electrokit.com/produkt/miljosensor-scd-30-co2-temperatur-rh/) | Environmental sensor, with "true" CO2 measurements | 799 SEK |
+| [Adafruit CCS811](https://www.electrokit.com/produkt/adafruit-ccs811-air-quality-sensor-breakout-voc-and-eco2/) | Environmental sensor for air quality | 279 SEK |
+| | **Total price** | 2027 SEK |
 
+I wanted to see the difference between a more expensive environmental sensor and a cheaper one. I have opted for the [SCD-30](https://www.electrokit.com/produkt/miljosensor-scd-30-co2-temperatur-rh/) priced at 799 SEK and the cheaper [Adafruit CCS811](https://www.electrokit.com/produkt/adafruit-ccs811-air-quality-sensor-breakout-voc-and-eco2/) priced at 279 SEK. Both track CO2, but do it very differently.
+
+CCS-811 measures [Volatile Organic Compounds](https://www.epa.gov/indoor-air-quality-iaq/what-are-volatile-organic-compounds-vocs) in the air and tries to deduce the equivelent carbon dioxide (eCO2) based on the total VOC in the air. This is based on the asumption that if the main producer of VOC in a room are people, there is a proportional amount of CO2 [^1]. In other words, it's far from exact, but if used in a room mainly housed of people it will give rough estimate of the CO2.
+
+On the contrary, the SCD-30 uses a [Nondispersive Infrared sensor (NDIR)](https://en.wikipedia.org/wiki/Nondispersive_infrared_sensor) which is a spectroscopic sensor that actually analysis the gas molecules in the air, and outputs the CO2 composition in the air by parts-per-million. This is not an estimate based on other factors, but the real deal. But it is also 2.5 times the price, is it worth it?
+
+Both sensors uses [I2C](https://learn.sparkfun.com/tutorials/i2c/all) to communicate, making it easy to hook both up and read the measurements from both.
 
 
 ### Environment setup
@@ -35,12 +46,25 @@ First up is getting the machine working, and to do so I followed the [Getting St
 
 After some fiddling around it turns out you need one more thing on Mac, xcode. So I installed XCode on my machine and presto, all working as intended.
 
-### Putting everything together
+I also set up an account with [Pybytes](https://pybytes.pycom.io/) as I will use that as my main platform to configure and collect data from the sensor.
 
-![Screenshot of PDF claiming I2C adress to be 0x61](assets/screenshot_i2c_adr.png)
+### Putting everything together
+I placed the LoPy4 in the Pycom Expansion board that was both part of the Bundle from Elektrokit. Since both sensors are communicating over I2C I can reuse the same connection for both sensors and communicate with both over the same wires.
 
 ### Platforms and infrastructure
 ### The code
+To handle the communication with the SCD-30 sensor I found a class online [^2] that I downloaded and placed in the `/lib` directory named `/lib/scd30.py`.
+
 ### The physical network layer
 ### Visualisation and user interface
 ### Finalizing the design
+
+### Links and resources
+
+![Screenshot of PDF claiming I2C adress to be 0x61](assets/screenshot_i2c_adr.png)
+[https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/relative-humidity]
+[https://cdn.sparkfun.com/assets/d/c/0/7/2/SCD30_Interface_Description.pdf]
+[https://learn.adafruit.com/adafruit-scd30?view=all]
+
+[^1]: https://www.careforair.eu/en/eco2/
+[^2]: https://github.com/agners/micropython-scd30/blob/master/scd30.py
