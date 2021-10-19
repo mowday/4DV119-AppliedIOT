@@ -51,6 +51,49 @@ I also set up an account with [Pybytes](https://pybytes.pycom.io/) as I will use
 ### Putting everything together
 I placed the LoPy4 in the Pycom Expansion board that was both part of the Bundle from Elektrokit. Since both sensors are communicating over I2C I can reuse the same connection for both sensors and communicate with both over the same wires.
 
+I started by connecting the SCD-3 sensor based on the following image:
+![https://learn.adafruit.com/assets/98480](assets/adafruit_products_SCD30_arduino_I2C_breadboard_bb.png)
+ - Connect board VIN (red wire) to Arduino 5V if you are running a 5V board Arduino (Uno, etc.). If your board is 3V, connect to that instead.
+ - Connect board GND (black wire) to Arduino GND
+ - Connect board SCL (yellow wire) to Arduino SCL
+ - Connect board SDA (blue wire) to Arduino SDA
+
+With this hooked up I needed to setup the I2C connection and start reading the measurements. Since I2C allows you to have multiple peripherals connected using the same wires, you need to adress the specific sensor you want to communicate with. According to the documentation[^3] for the sensor, the adress should be `0x61`.
+![Screenshot of PDF claiming I2C adress to be 0x61](assets/screenshot_i2c_adr.png)
+If I wouldn't have found the address in the documentation I could have searched for it using `i2cbus.scan` to get a list of all sensors connected to the I2C chain.
+Armed with this knowledge I setup the sensor readings
+
+```python
+import time
+from machine import I2C, Pin
+from scd30 import SCD30
+
+# Setup the I2C bus and set a baudrate supported by the sensors
+i2cbus = I2C(0, I2C.MASTER, baudrate=20000)
+
+# Setup the library used to communicate and decode the data from the sensor
+# This uses the address specified for the sensor.
+scd30 = SCD30(i2cbus, 0x61)
+
+print("Waiting for the sensor to warm up")
+# Wait 5 minutes initially to allow the sensor to warm up
+time.sleep(5 * 60)
+
+while True:
+    # Wait for sensor data to be ready to read (by default every 2 seconds)
+    print("Waiting for sensor to be ready...")
+    while scd30.get_status_ready() != 1:
+        time.sleep_ms(200)
+    print("Sensor ready! Reading measurements")
+    while True:
+        measurements = scd30.read_measurement()
+        print("CO2 (float) - " + str(measurements[0]))
+        print("CO2 (int) - " + str(round(measurements[0])))
+        time.sleep(5)
+```
+
+The SCD-30 sensor needs to warm up to give an accurate reading, so we start by waiting 5 minutes for it to warm up. Then we enter a loop where we wait for the sensor to be ready for a measurement (this a precaution as it already should be) and then start reading every 5 seconds and print the values.
+
 ### Platforms and infrastructure
 ### The code
 To handle the communication with the SCD-30 sensor I found a class online [^2] that I downloaded and placed in the `/lib` directory named `/lib/scd30.py`.
@@ -61,10 +104,10 @@ To handle the communication with the SCD-30 sensor I found a class online [^2] t
 
 ### Links and resources
 
-![Screenshot of PDF claiming I2C adress to be 0x61](assets/screenshot_i2c_adr.png)
+
 [https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/relative-humidity]
-[https://cdn.sparkfun.com/assets/d/c/0/7/2/SCD30_Interface_Description.pdf]
 [https://learn.adafruit.com/adafruit-scd30?view=all]
 
 [^1]: https://www.careforair.eu/en/eco2/
 [^2]: https://github.com/agners/micropython-scd30/blob/master/scd30.py
+[^3]: https://cdn.sparkfun.com/assets/d/c/0/7/2/SCD30_Interface_Description.pdf
