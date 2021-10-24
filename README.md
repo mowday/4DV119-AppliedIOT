@@ -13,7 +13,6 @@ If I have time I will also add a sound level tracker.
     - [The physical network layer](#the-physical-network-layer)
     - [Visualisation and user interface](#visualisation-and-user-interface)
     - [Finalizing the design](#finalizing-the-design)
-    - [Links and resources](#links-and-resources)
 
 ### Objectives
 
@@ -51,7 +50,7 @@ I also set up an account with [Pybytes](https://pybytes.pycom.io/) as I will use
 ### Putting everything together
 I placed the LoPy4 in the Pycom Expansion board that was both part of the Bundle from Elektrokit. Since both sensors are communicating over I2C I can reuse the same connection for both sensors and communicate with both over the same wires.
 
-I started by connecting the SCD-3 sensor based on the following image:
+I started by connecting the SCD-3 sensor based on the following image (from [adafruits getting started guide](https://learn.adafruit.com/adafruit-scd30?view=all)):
 ![https://learn.adafruit.com/assets/98480](assets/adafruit_products_SCD30_arduino_I2C_breadboard_bb.png)
  - Connect board VIN (red wire) to Arduino 5V if you are running a 5V board Arduino (Uno, etc.). If your board is 3V, connect to that instead.
  - Connect board GND (black wire) to Arduino GND
@@ -94,20 +93,60 @@ while True:
 
 The SCD-30 sensor needs to warm up to give an accurate reading, so we start by waiting 5 minutes for it to warm up. Then we enter a loop where we wait for the sensor to be ready for a measurement (this a precaution as it already should be) and then start reading every 5 seconds and print the values.
 
+The downside with this is that placing the unit in deep sleep is not a viable option, as I would need to power it up for at least 5 minutes for a single measurement. So running this setup on battery power is not possible.
+
 ### Platforms and infrastructure
+
+I decided early on that I wanted to reach the end goal of having a sensor sending measurements to a central location as quickly and easily as possible. As I'm using LoPy4 from Pycom, it comes with a super easy platform, [Pybytes](https://pycom.io/products/software/pybytes-3/). Pybytes is completely free of charge and easily integrated.
+
+The upside with Pybytes is the ease. When I started playing around with platform it took me no basically no time at all to create an account, flash my LoPy4 with the correct config and sending my first signal (I followed [this getting started guide](https://docs.pycom.io/gettingstarted/)).
+
+I never had any problems at all with Pybytes, and I think if you want to start playing around with IOT this is a super easy way.
+
+It does of course have some down sides. For one, it's quite hard to see what is actually going on behind the scenes. For instance, the serialization of data in the signals being sent is done in the Pybytes library. When transmitting data is expensive, as it is if you are running an IOT device, you want to make the packages as small as possible. I found it very hard to actually have any sway in this using PyBytes.
+
+For instance, I sent the same signal as a float, integer and string and found that the string was actually the smalles package of the three.
+I also tried to send a single bit to test out the platform, but that gets converted into an integer before being sent resulting in 8 bytes being sent.
+
+If I were to continue with the development of a sensor like this I would definetely look at other options. But purely for the ease of getting up and running, I highly recomend PyBytes!
+
 ### The code
+
 To handle the communication with the SCD-30 sensor I found a class online [^2] that I downloaded and placed in the `/lib` directory named `/lib/scd30.py`.
 
+When using PyBytes you can simply start sending measurement using this simple command:
+
+```python
+pybytes.send_signal(1, "hello world")
+```
+
 ### The physical network layer
+
+The fact that the sensor needed to powered up for at least 5 minutes before making a measurement has a massive impact on all factors of this solution. Because there is no real need to deep sleep and conserve power, we are able to measure and send measurements as often as we see fit. I decided to send a measurement every minute. While I technically could send it way more often than that (in fact, during development I sent measurements every 5 seconds) the value doesn't really change that much in a small timeframe.
+
+I currently connect to the internet via WiFi, mostly because I live in a small village with no real coverege of LoRa or Sigfox. But seeing as this sensor is used to track environmental data within room, it's probable that it will ahve access to a WiFi even if moved into a production state.
+
+Behind the scenes PyBytes uses MQTT[^4], but you are never confronted by this if you simply use the PyBytes library.
+
 ### Visualisation and user interface
+
+All data is sent to and stored for a month in PyBytes. The data is stored both in raw form but also visualized in graphs that can be placed on dashboards. This is of course limiting, but to get started it's really well made. By the simply flashing the firmware, uploading the config and using super basic commands I got this dashboard in no time at all:
+
+![Example of PyBytes graph](assets/co2-dashboard.png)
+
+All of the data is also visible in table form. One really nice thing with that is that they clearly show the package size, which helps when you want to finetune the data you are sending:
+
+![Example of PyBytes data table](assets/pybytes-data-table.png)
+
+The downside is that the library obscures a lot of the data serialization, so you are unable have full controll over the data packages.
+
 ### Finalizing the design
 
-### Links and resources
-
+---
 
 [https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/relative-humidity]
-[https://learn.adafruit.com/adafruit-scd30?view=all]
 
 [^1]: https://www.careforair.eu/en/eco2/
 [^2]: https://github.com/agners/micropython-scd30/blob/master/scd30.py
 [^3]: https://cdn.sparkfun.com/assets/d/c/0/7/2/SCD30_Interface_Description.pdf
+[^4]: https://docs.pycom.io/tutorials/networkprotocols/mqtt/
