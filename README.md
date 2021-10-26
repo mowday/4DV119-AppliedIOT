@@ -40,8 +40,9 @@ Both sensors uses [I2C](https://learn.sparkfun.com/tutorials/i2c/all) to communi
 
 ### Environment setup
 
-First up is getting the machine working, and to do so I followed the [Getting Started guide from Pycom](https://docs.pycom.io/gettingstarted/). I am running on a Macbook Pro 2019 running macOS 11.4 (Big Sur). I already had NodeJS installed in my machine which is a pre-requistes and decided to use VSCode as it's my preferred choice of IDE. That did however prove to not be completely straight forward. Following the guide I installed the [Pymakr plugin](https://marketplace.visualstudio.com/items?itemName=pycom.Pymakr) and seeing as I already had NodeJS installed I thought I would be golden. But after installing the plugin nothing happens, and all commands fails:
-#TODO - Insert image here
+First up is getting the machine working, and to do so I followed the [Getting Started guide from Pycom](https://docs.pycom.io/gettingstarted/). I am running on a Macbook Pro 2019 running macOS 11.4 (Big Sur). I already had NodeJS installed in my machine which is a pre-requistes and decided to use VSCode as it's my preferred choice of IDE. That did however prove to not be completely straight forward. Following the guide I installed the [Pymakr plugin](https://marketplace.visualstudio.com/items?itemName=pycom.Pymakr) and seeing as I already had NodeJS installed I thought I would be golden. But after installing the plugin nothing happens, and all commands fails with the error:
+
+> command 'pymakr.connect' not found
 
 After some fiddling around it turns out you need one more thing on Mac, xcode. So I installed XCode on my machine and presto, all working as intended.
 
@@ -139,6 +140,24 @@ All of the data is also visible in table form. One really nice thing with that i
 ![Example of PyBytes data table](assets/pybytes-data-table.png)
 
 The downside is that the library obscures a lot of the data serialization, so you are unable have full controll over the data packages.
+
+One more significant downside I found is that while Pybytes stores the data for a full month, it's very little data you can actually view. I wanted to be able to track more over time, and again opted for learning over a produciton grade solution. I setup a new google sheet, and added a script that acted as a webhook receiver. In PyBytes I then setup a new integration that forwards all signals to the webhook, and that in turn inputs all data into the sheet. SO now I have a free of charge persistant data store. Albeit not a good one for the long run, but it served it's purpose and I got to play around with the scripting features in Google Sheets. The script itself is very straight forward:
+
+```javascript
+// Webhook receiver function, called when someone makes a post
+// to the webhook URI
+function doPost(e) {
+    var sheet = SpreadsheetApp.getActiveSheet();
+    var lastRow = Math.max(sheet.getLastRow(), 1);
+    var timestamp = new Date();
+
+    sheet.getRange(lastRow + 1, 1).setValue(timestamp);
+    sheet.getRange(lastRow + 1, 2).setValue(JSON.parse(e.postData.contents).signal);
+    sheet.getRange(lastRow + 1, 3).setValue(JSON.parse(e.postData.contents).payload);
+    SpreadsheetApp.flush();
+    return HtmlService.createHtmlOutput("post successful")
+}
+```
 
 ### Finalizing the design
 
