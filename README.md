@@ -1,7 +1,7 @@
 # Room environmental sensor
 
 This project aims to track environmental sensor readings from a room over time. This includes temperature, relative humidity and CO2 levels. Since this will placed indoors it will use WiFi as primary network, and send data over time to a central location.
-If I have time I will also add a sound level tracker.
+If I have time I will also add a sound level tracker. (Spoiler, I did not...)
 
 - [Room environmental sensor](#room-environmental-sensor)
     - [Objectives](#objectives)
@@ -16,9 +16,9 @@ If I have time I will also add a sound level tracker.
 
 ### Objectives
 
-I work in Educational Technology and wanted to dig into IOT and it's applicancy. The impact the working environment has on everyone, including students, is well known. Having IOT units inside the classrooms would allow to track the impact it has, and how the rooms are actually fitted for the numebr of students across all days. This can then be overlayed with other information, like performance, grades, schedules etc. to get an even bigger impact of the data.
+I work in Educational Technology and wanted to dig into IOT and it's applicancy. The impact the working environment has on everyone, including students, is well known. Having IOT units inside the classrooms would allow tracking the impact it has, and how the rooms are actually fitted for the number of students across all days. This can then be overlayed with other information, like performance, grades, schedules etc. to get an even bigger impact of the data.
 
-Since this all about learning quickly I gave chosen tools that gets me to the end goal quickly, and perhaps not the best choices for a production grade product.
+Since this all about learning quickly I have chosen tools that gets me to the end goal quickly, and perhaps not the best choices for a production grade product.
 
 ### Material
 
@@ -141,7 +141,7 @@ All of the data is also visible in table form. One really nice thing with that i
 
 The downside is that the library obscures a lot of the data serialization, so you are unable have full controll over the data packages.
 
-One more significant downside I found is that while Pybytes stores the data for a full month, it's very little data you can actually view. I wanted to be able to track more over time, and again opted for learning over a produciton grade solution. I setup a new google sheet, and added a script that acted as a webhook receiver. In PyBytes I then setup a new integration that forwards all signals to the webhook, and that in turn inputs all data into the sheet. SO now I have a free of charge persistant data store. Albeit not a good one for the long run, but it served it's purpose and I got to play around with the scripting features in Google Sheets. The script itself is very straight forward:
+One more significant downside I found is that while Pybytes stores the data for a full month, it's very little data you can actually view. I wanted to be able to track more over time, and again opted for learning over a produciton grade solution. I setup a new google sheet, and added a script that acted as a webhook receiver. In PyBytes I then setup a new integration that forwards all signals to the webhook, and that in turn inputs all data into the sheet. So now I have a free of charge persistant data store. Albeit not a good one for the long run, but it served it's purpose and I got to play around with the scripting features in Google Sheets. The script itself is very straight forward:
 
 ```javascript
 // Webhook receiver function, called when someone makes a post
@@ -159,11 +159,16 @@ function doPost(e) {
 }
 ```
 
+This simply places the measurement in it's raw form together with the signal key in a new row of the Google Sheet:
+
+![Screenshot of Google Sheet](assets/google-docs.png)
+
 ### Finalizing the design
+I'm still not done yet, and plan to continue working on it. Right now I'm building a small web application running on it, serving a super simple UI and API. I'm able to place the LoPY 4 into a hybrid wifi state, where it's acting as an AP as well as a client. This allows me to connect directly to the device, search for available networks and set a password for it. There are of course security aspects of this to consider for production use (as the passwords for the SSID are stored in plain text on the device), but that existed with the PyBytes setup as well.
+
+I'm also fiddling around with a 3D printed housing for it, but I need to test exactly how it affects the measurements.
 
 ---
-
-[https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/relative-humidity]
 
 [^1]: https://www.careforair.eu/en/eco2/
 [^2]: https://github.com/agners/micropython-scd30/blob/master/scd30.py
